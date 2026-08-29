@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多智能体协作分析系统 — 工作流</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f4f9;
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 40px 44px 48px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12);
+            transition: all 0.2s;
+        }
+
+        /* 头部 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #eef2f7;
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .header-left h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b1e33;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 span {
+            background: #1a5cff;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            padding: 2px 14px;
+            border-radius: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        .header-left .sub {
+            margin-top: 6px;
+            color: #5e6f8d;
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f4f7fc;
+            padding: 6px 16px 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1d314a;
+        }
+
+        .badge .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        .dot.blue {
+            background: #1a5cff;
+        }
+        .dot.purple {
+            background: #8b5cf6;
+        }
+        .dot.red {
+            background: #ef4444;
+        }
+        .dot.orange {
+            background: #f59e0b;
+        }
+        .dot.teal {
+            background: #14b8a6;
+        }
+        .dot.gray {
+            background: #94a3b8;
+        }
+
+        /* 图例 */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px 28px;
+            background: #f8faff;
+            padding: 14px 22px;
+            border-radius: 20px;
+            margin-bottom: 28px;
+            border: 1px solid #e9eef6;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1d314a;
+        }
+
+        .legend-item .swatch {
+            width: 18px;
+            height: 18px;
+            border-radius: 8px;
+        }
+
+        /* 工作流节点 */
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+
+        /* 每个节点卡片 */
+        .node {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            position: relative;
+        }
+
+        /* 左侧序号 + 连线区 */
+        .node-left {
+            width: 60px;
+            min-width: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 6px;
+            position: relative;
+        }
+
+        .node-left .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: #fff;
+            flex-shrink: 0;
+            z-index: 2;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .node-left .line-down {
+            flex: 1;
+            width: 2px;
+            background: #dce3ed;
+            margin: 4px 0 2px;
+            min-height: 20px;
+        }
+
+        .node:last-child .node-left .line-down {
+            opacity: 0;
+        }
+
+        /* 右侧主卡片 */
+        .node-card {
+            flex: 1;
+            background: #ffffff;
+            border: 1.5px solid #eef2f7;
+            border-radius: 18px;
+            padding: 18px 24px 18px 22px;
+            margin-bottom: 12px;
+            transition: border 0.15s, box-shadow 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .node-card:hover {
+            border-color: #cdd8e9;
+            box-shadow: 0 6px 18px rgba(0, 20, 40, 0.06);
+        }
+
+        .node-card .left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1 1 220px;
+        }
+
+        .node-card .left .icon {
+            font-size: 24px;
+            width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .node-card .left .info .title {
+            font-weight: 650;
+            font-size: 16px;
+            color: #0b1e33;
+            letter-spacing: 0.2px;
+        }
+
+        .node-card .left .info .desc {
+            font-size: 13.5px;
+            color: #4b5e7a;
+            margin-top: 2px;
+            line-height: 1.5;
+        }
+
+        .node-card .right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .tag {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 40px;
+            background: #f1f5fb;
+            color: #2a405e;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .tag.blue {
+            background: #e5edff;
+            color: #1a4fc3;
+        }
+        .tag.purple {
+            background: #ede9fe;
+            color: #6d37c7;
+        }
+        .tag.red {
+            background: #fee9e9;
+            color: #bc1c1c;
+        }
+        .tag.orange {
+            background: #fef3d7;
+            color: #b46a0a;
+        }
+        .tag.teal {
+            background: #d5f5f0;
+            color: #0d7a6b;
+        }
+        .tag.gray {
+            background: #f1f4f9;
+            color: #4b5e7a;
+        }
+        .tag.green {
+            background: #e4f4e4;
+            color: #1d7a3a;
+        }
+
+        .arrow-symbol {
+            color: #9aadc7;
+            font-size: 18px;
+            font-weight: 300;
+            margin: 0 2px;
+        }
+
+        /* 决策菱形特殊样式 */
+        .node-card.decision {
+            border-color: #fcd34d;
+            background: #fffbeb;
+            border-width: 2px;
+        }
+
+        .node-card.decision .tag {
+            background: #fde68a;
+            color: #7c4f0a;
+        }
+
+        .node-card.warning-card {
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .node-card.warning-card .tag {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        /* 分支标注（决策下的辅助说明） */
+        .branch-hint {
+            display: flex;
+            gap: 20px 40px;
+            flex-wrap: wrap;
+            padding: 6px 0 12px 60px;
+            font-size: 13px;
+            color: #3f5a77;
+        }
+
+        .branch-hint .item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .branch-hint .item .arrow {
+            color: #8ba0bc;
+            font-size: 18px;
+        }
+
+        /* 约束条 */
+        .constraint {
+            margin: 8px 0 12px 60px;
+            background: #f0f5fe;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #1a4c8c;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px dashed #b7cde0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 700px) {
+            .container {
+                padding: 20px 16px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .badge-group {
+                width: 100%;
+            }
+            .node-left {
+                width: 44px;
+                min-width: 44px;
+            }
+            .node-card {
+                padding: 14px 16px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .node-card .right {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            .branch-hint {
+                padding-left: 44px;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .constraint {
+                margin-left: 44px;
+                flex-wrap: wrap;
+            }
+            .legend {
+                gap: 10px 18px;
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 20px;
+            }
+            .container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            .node-card:hover {
+                box-shadow: none;
+                border-color: #eef2f7;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ===== 头部 ===== -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    🧠 多智能体协作分析系统
+                    <span>v1.0</span>
+                </h1>
+                <div class="sub">用户掌舵 · 智能参谋 · 闭环决策</div>
+            </div>
+            <div class="badge-group">
+                <span class="badge"><span class="dot blue"></span> 系统处理</span>
+                <span class="badge"><span class="dot purple"></span> 用户操作</span>
+                <span class="badge"><span class="dot red"></span> 智能体集群</span>
+                <span class="badge"><span class="dot orange"></span> 决策点</span>
+                <span class="badge"><span class="dot teal"></span> 数据展示</span>
+            </div>
+        </div>
+
+        <!-- ===== 图例 ===== -->
+        <div class="legend">
+            <span class="legend-item"><span class="swatch" style="background:#3498db;"></span> 系统处理</span>
+            <span class="legend-item"><span class="swatch" style="background:#9b59b6;"></span> 用户操作</span>
+            <span class="legend-item"><span class="swatch" style="background:#e74c3c;"></span> 智能体集群</span>
+            <span class="legend-item"><span class="swatch" style="background:#f39c12;"></span> 决策点</span>
+            <span class="legend-item"><span class="swatch" style="background:#1abc9c;"></span> 数据展示</span>
+            <span class="legend-item"><span class="swatch" style="background:#e67e22;"></span> 重置 / 警告</span>
+            <span class="legend-item"><span class="swatch" style="background:#27ae60;"></span> 开始 / 结束</span>
+        </div>
+
+        <!-- ===== 工作流 ===== -->
+        <div class="workflow">
+
+            <!-- 1. 开始 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#27ae60;">始</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card" style="border-color:#a9dfbf;background:#f0faf5;">
+                    <div class="left">
+                        <span class="icon">🚀</span>
+                        <div class="info">
+                            <div class="title">开始</div>
+                            <div class="desc">用户进入系统，启动分析流程</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag green">起点</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 用户输入目标 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#9b59b6;">1</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">📝</span>
+                        <div class="info">
+                            <div class="title">用户输入目标</div>
+                            <div class="desc">一句话描述即可，支持模糊目标</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag purple">用户操作</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 目标解析 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#3498db;">2</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">🔍</span>
+                        <div class="info">
+                            <div class="title">目标解析</div>
+                            <div class="desc">提取关键要素 · 识别核心诉求</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag blue">系统处理</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 快速澄清 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#9b59b6;">3</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">💬</span>
+                        <div class="info">
+                            <div class="title">快速澄清</div>
+                            <div class="desc">最多 3 个结构化问题 · 引导用户细化目标</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag purple">用户操作</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 多智能体并行分析 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#e74c3c;">4</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">🧠</span>
+                        <div class="info">
+                            <div class="title">多智能体并行分析</div>
+                            <div class="desc">战略 · 技术 · 执行 · 风险 · 创新 五大视角</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag red">智能体集群</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 分析结果展示 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#1abc9c;">5</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">📊</span>
+                        <div class="info">
+                            <div class="title">分析结果展示</div>
+                            <div class="desc">✅ 共识区 · ⚡ 分歧区 · 💡 系统提炼为选择题</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag teal">数据展示</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. 决策点：是否有核心分歧 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#f39c12;">6</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card decision">
+                    <div class="left">
+                        <span class="icon">❓</span>
+                        <div class="info">
+                            <div class="title">用户判断：是否有核心分歧需要表态？</div>
+                            <div class="desc">浏览共识与分歧，自主决定是否介入</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag orange">决策点</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分支说明 -->
+            <div class="branch-hint">
+                <span class="item"><span class="arrow">↗</span> 有分歧 → 进入用户表态</span>
+                <span class="item"><span class="arrow">➡</span> 无分歧 / 不想表态 → 跳转终审</span>
+            </div>
+
+            <!-- 8. 用户做倾向性选择 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#9b59b6;">7</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">👤</span>
+                        <div class="info">
+                            <div class="title">用户做倾向性选择</div>
+                            <div class="desc">A 倾向方案 · B 倾向方案 · C 中立 · D 自定义</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag purple">用户操作</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. 智能体重新分析 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#e74c3c;">8</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">🔄</span>
+                        <div class="info">
+                            <div class="title">智能体重新分析</div>
+                            <div class="desc">基于用户倾向调整观点 · ⚠️ 同时展示被舍弃方观点（防回音壁）</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag red">智能体集群</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. 新一轮结果展示 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#1abc9c;">9</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">📊</span>
+                        <div class="info">
+                            <div class="title">新一轮结果展示</div>
+                            <div class="desc">✅ 已解决 N 个 · ⚡ 仍存 M 个 · 🆕 新生 K 个</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag teal">数据展示</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 约束条 -->
+            <div class="constraint">
+                <span>📌</span> 约束：最多 3 轮碰撞 · 第 3 轮强制进入终审
+            </div>
+
+            <!-- 11. 决策点：用户选择下一步 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#f39c12;">10</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card decision">
+                    <div class="left">
+                        <span class="icon">👉</span>
+                        <div class="info">
+                            <div class="title">用户选择下一步</div>
+                            <div class="desc">继续碰撞 · 终止进入终审 · 重置重来</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag orange">决策点</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分支说明 -->
+            <div class="branch-hint">
+                <span class="item"><span class="arrow">↻</span> 继续 → 返回第 5 步（展示结果）</span>
+                <span class="item"><span class="arrow">➡</span> 终止 → 进入终审确认</span>
+                <span class="item"><span class="arrow">⟳</span> 重置 → 回到起点（清空历史）</span>
+            </div>
+
+            <!-- 12. 终审确认 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#9b59b6;">11</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">📋</span>
+                        <div class="info">
+                            <div class="title">终审确认</div>
+                            <div class="desc">📄 最终综合方案 · 📍 用户决策路径 · 🗑️ 被舍弃观点汇总</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag purple">用户操作</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 13. 决策点：是否满意 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#f39c12;">12</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card decision">
+                    <div class="left">
+                        <span class="icon">👍</span>
+                        <div class="info">
+                            <div class="title">用户是否满意最终方案？</div>
+                            <div class="desc">满意则保存 · 不满意则定点修正</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag orange">决策点</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分支说明 -->
+            <div class="branch-hint">
+                <span class="item"><span class="arrow">✅</span> 满意 → 保存结果</span>
+                <span class="item"><span class="arrow">❌</span> 不满意 → 锁定方向重新分析</span>
+            </div>
+
+            <!-- 14. 保存结果 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#1abc9c;">13</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card">
+                    <div class="left">
+                        <span class="icon">💾</span>
+                        <div class="info">
+                            <div class="title">保存结果</div>
+                            <div class="desc">生成结构化报告（JSON / Markdown）</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag teal">数据展示</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 15. 定点修正 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#e67e22;">14</div>
+                    <div class="line-down"></div>
+                </div>
+                <div class="node-card warning-card">
+                    <div class="left">
+                        <span class="icon">🎯</span>
+                        <div class="info">
+                            <div class="title">定点修正</div>
+                            <div class="desc">指出不满意之处 · 锁定方向重新分析</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag" style="background:#fecaca;color:#991b1b;">重置分支</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 16. 结束 -->
+            <div class="node">
+                <div class="node-left">
+                    <div class="step-circle" style="background:#27ae60;">终</div>
+                    <div class="line-down" style="opacity:0;"></div>
+                </div>
+                <div class="node-card" style="border-color:#a9dfbf;background:#f0faf5;">
+                    <div class="left">
+                        <span class="icon">🏁</span>
+                        <div class="info">
+                            <div class="title">结束</div>
+                            <div class="desc">分析流程完成，输出最终方案报告</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <span class="tag green">终点</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /workflow -->
+
+        <!-- 底部 -->
+        <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eef2f7;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;color:#6f84a2;">
+            <span>📌 用户始终掌握最终决策权 · 系统仅提供多视角参谋</span>
+            <span>⚡ 每次碰撞结果均可回溯 · 支持随时重置</span>
+        </div>
+
+    </div><!-- /container -->
+
+</body>
+</html>
